@@ -1,10 +1,6 @@
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -13,33 +9,27 @@ public class Main {
 
         // Criar uma conexão HTTP e buscar os top 250 filmes
 
-        String url = "https://raw.githubusercontent.com/alura-cursos/imersao-java-2-api/main/TopMovies.json";
-        URI endereco = URI.create(url);
+        //String url = "https://raw.githubusercontent.com/alura-cursos/imersao-java-2-api/main/TopMovies.json";
+        String url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&start_date=2022-06-12&end_date=2022-06-14";
 
-        var client = HttpClient.newHttpClient();
-        var request = HttpRequest.newBuilder(endereco).GET().build();
+        var http = new ClienteHttp();
+        var body = http.buscaDados(url);
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        var body = response.body();
-        System.out.println(body);
 
         //Capturar somente os dados que interessam (Titulo, poster e rank)
-        var jsonParser = new JsonParser();
+        ExtratorDeConteudo extrator = new ExtratorDeConteudoDaNasa();
 
-
-        List<Map<String, String>> lsitaDeFilmes = jsonParser.parse(body);
+        List<Conteudo> conteudos = extrator.extraiConteudos(body);
 
         // Exibir e manipular os dados
         var geradora = new CriadorDeStikers();
-        for (Map<String, String> filme: lsitaDeFilmes) {
+        for (int i = 0; i < 3; i++){
 
-            var urlImage = filme.get("image");
-            var titulo = filme.get("title");
+            Conteudo conteudo = conteudos.get(i);
 
-            InputStream inputStream = new URL(urlImage).openStream();
-            var nomeArquivo = titulo + ".png";
-
+            InputStream inputStream = new URL(conteudo.getUrlImagem()).openStream();
+            var nomeArquivo = conteudo.getTitulo() + ".png";
 
             geradora.criar(inputStream, nomeArquivo);
 
